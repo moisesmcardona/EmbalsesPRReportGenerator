@@ -378,7 +378,7 @@ namespace EmbalsesPRSteemitGenerator
             {
                 ToaVacaLevel = "Fuera de Servicio";
             }
-            StreamWriter WriteReport = new StreamWriter("report.txt", false);
+            StreamWriter WriteReport = new StreamWriter("report-" + DateTime.Now.ToString("yyyy-MM-dd-hh-mm-ss-tt") + ".txt", false);
             WriteReport.WriteLine("Hola a todos," + Environment.NewLine);
             WriteReport.WriteLine("A continuación se muestran los niveles de agua de los embalses principales de Puerto Rico para el día de hoy. Reporte " + DateTime.Now.ToString("tt:") + Environment.NewLine);
             WriteReport.WriteLine("Reporte generado a las " + DateTime.Now.ToString("hh:mm tt"));
