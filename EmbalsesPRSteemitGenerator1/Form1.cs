@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Forms;
 
 namespace EmbalsesPRSteemitGenerator
@@ -18,46 +20,54 @@ namespace EmbalsesPRSteemitGenerator
         private ReservoirData GetReservoirLevelAsync(string zoneID, int ArrayData)
         {
             string CurrentLevel = "";
-            WebRequest request = WebRequest.Create("https://waterservices.usgs.gov/nwis/iv/?sites=" + zoneID.ToString() + "&period=P1D&format=json");
-            System.Net.WebResponse response = request.GetResponse();
-            Stream dataStream = response.GetResponseStream();
-            StreamReader reader = new StreamReader(dataStream);
-            string ResponseFromServer = reader.ReadToEnd();
-            JObject JsonDataResult = JObject.Parse(ResponseFromServer);
-            IList<JToken> results = JsonDataResult["value"]["timeSeries"][ArrayData]["values"].Children().ToList();
-            JToken LastItemInJson = results[results.Count() - 1];
-            JToken Item1 = LastItemInJson["value"];
-            JToken Item2 = Item1[Item1.Count() - 1];
-            CurrentLevel = Item2.SelectToken("value").ToString();
-            DateTime dateAndTime = DateTime.Parse(Item2.SelectToken("dateTime").ToString());
-            string MonthName = string.Empty;
-            if (dateAndTime.ToString("MM") == "01")
-                MonthName = "enero";
-            else if (dateAndTime.ToString("MM") == "02")
-                MonthName = "febrero";
-            else if (dateAndTime.ToString("MM") == "03")
-                MonthName = "marzo";
-            else if (dateAndTime.ToString("MM") == "04")
-                MonthName = "abril";
-            else if (dateAndTime.ToString("MM") == "05")
-                MonthName = "mayo";
-            else if (dateAndTime.ToString("MM") == "06")
-                MonthName = "junio";
-            else if (dateAndTime.ToString("MM") == "07")
-                MonthName = "julio";
-            else if (dateAndTime.ToString("MM") == "08")
-                MonthName = "agosto";
-            else if (dateAndTime.ToString("MM") == "09")
-                MonthName = "septiembre";
-            else if (dateAndTime.ToString("MM") == "10")
-                MonthName = "octubre";
-            else if (dateAndTime.ToString("MM") == "11")
-                MonthName = "noviembre";
-            else if (dateAndTime.ToString("MM") == "12")
-                MonthName = "diciembre";
-            string FullDate = dateAndTime.ToString("dd") + " de " + MonthName + " de " + dateAndTime.ToString("yyyy");
-            string Time = dateAndTime.ToString("hh:mm tt");
-            return new ReservoirData(CurrentLevel, FullDate, Time);
+            try
+            {
+                WebRequest request = WebRequest.Create("https://waterservices.usgs.gov/nwis/iv/?sites=" + zoneID.ToString() + "&period=P1D&format=json");
+                System.Net.WebResponse response = request.GetResponse();
+                Stream dataStream = response.GetResponseStream();
+                StreamReader reader = new StreamReader(dataStream);
+                string ResponseFromServer = reader.ReadToEnd();
+                JObject JsonDataResult = JObject.Parse(ResponseFromServer);
+                IList<JToken> results = JsonDataResult["value"]["timeSeries"][ArrayData]["values"].Children().ToList();
+                JToken LastItemInJson = results[results.Count() - 1];
+                JToken Item1 = LastItemInJson["value"];
+                JToken Item2 = Item1[Item1.Count() - 1];
+                CurrentLevel = Item2.SelectToken("value").ToString();
+                DateTime dateAndTime = DateTime.Parse(Item2.SelectToken("dateTime").ToString());
+                string MonthName = string.Empty;
+                if (dateAndTime.ToString("MM") == "01")
+                    MonthName = "enero";
+                else if (dateAndTime.ToString("MM") == "02")
+                    MonthName = "febrero";
+                else if (dateAndTime.ToString("MM") == "03")
+                    MonthName = "marzo";
+                else if (dateAndTime.ToString("MM") == "04")
+                    MonthName = "abril";
+                else if (dateAndTime.ToString("MM") == "05")
+                    MonthName = "mayo";
+                else if (dateAndTime.ToString("MM") == "06")
+                    MonthName = "junio";
+                else if (dateAndTime.ToString("MM") == "07")
+                    MonthName = "julio";
+                else if (dateAndTime.ToString("MM") == "08")
+                    MonthName = "agosto";
+                else if (dateAndTime.ToString("MM") == "09")
+                    MonthName = "septiembre";
+                else if (dateAndTime.ToString("MM") == "10")
+                    MonthName = "octubre";
+                else if (dateAndTime.ToString("MM") == "11")
+                    MonthName = "noviembre";
+                else if (dateAndTime.ToString("MM") == "12")
+                    MonthName = "diciembre";
+                string FullDate = dateAndTime.ToString("dd") + " de " + MonthName + " de " + dateAndTime.ToString("yyyy");
+                string Time = dateAndTime.ToString("hh:mm tt");
+                return new ReservoirData(CurrentLevel, FullDate, Time);
+            }
+            catch
+            {
+                return new ReservoirData("0.0", "none", "none");
+            }
+           
         }
         public class ReservoirData
         {
@@ -90,7 +100,7 @@ namespace EmbalsesPRSteemitGenerator
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void GenerateReport(bool silent = false)
         {
             ReservoirData Caonillas = GetReservoirLevelAsync("50026140", 1);
             ReservoirData Carite = GetReservoirLevelAsync("50039995", 3);
@@ -125,7 +135,8 @@ namespace EmbalsesPRSteemitGenerator
             {
                 CaonillasLevel = "Control";
             }
-            else {
+            else
+            {
                 CaonillasLevel = "Fuera de Servicio";
             }
             //Carite
@@ -378,74 +389,239 @@ namespace EmbalsesPRSteemitGenerator
             {
                 ToaVacaLevel = "Fuera de Servicio";
             }
-            StreamWriter WriteReport = new StreamWriter("report-" + DateTime.Now.ToString("yyyy-MM-dd-hh-mm-ss-tt") + ".txt", false);
+            string FileName = "report-" + DateTime.Now.ToString("yyyy-MM-dd-hh-mm-ss-tt") + ".txt";
+            StreamWriter WriteReport = new StreamWriter(FileName, false);
             WriteReport.WriteLine("Hola a todos," + Environment.NewLine);
             WriteReport.WriteLine("A continuación se muestran los niveles de agua de los embalses principales de Puerto Rico para el día de hoy. Reporte " + DateTime.Now.ToString("tt:") + Environment.NewLine);
             WriteReport.WriteLine("Reporte generado a las " + DateTime.Now.ToString("hh:mm tt"));
             WriteReport.WriteLine("# Caonillas");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50026140.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + Caonillas.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + CaonillasLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + Caonillas.getTime());
+            if (Convert.ToDouble(Caonillas.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + Caonillas.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + CaonillasLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + Caonillas.getTime());
+            }
             WriteReport.WriteLine("# Carite");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50039995.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + Carite.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + CariteLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + Carite.getTime());
+            if (Convert.ToDouble(Carite.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + Carite.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + CariteLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + Carite.getTime());
+            }
             WriteReport.WriteLine("# Carraízo");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50059000.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + Carraizo.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + CarraizoLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + Carraizo.getTime());
+            if (Convert.ToDouble(Carraizo.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + Carraizo.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + CarraizoLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + Carraizo.getTime());
+            }
             WriteReport.WriteLine("# Cerrillos");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50113950.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + Cerrillos.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + CerrillosLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + Cerrillos.getTime());
+            if (Convert.ToDouble(Cerrillos.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + Cerrillos.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + CerrillosLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + Cerrillos.getTime());
+            }
             WriteReport.WriteLine("# Cidra");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50047550.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + Cidra.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + CidraLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + Cidra.getTime());
+            if (Convert.ToDouble(Cidra.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + Cidra.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + CidraLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + Cidra.getTime());
+            }
             WriteReport.WriteLine("# Fajardo");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50071225.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + Fajardo.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + FajardoLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + Fajardo.getTime());
+            if (Convert.ToDouble(Fajardo.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + Fajardo.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + FajardoLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + Fajardo.getTime());
+            }
             WriteReport.WriteLine("# Guajataca");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50010800.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + Guajataca.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + GuajatacaLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + Guajataca.getTime());
+            if (Convert.ToDouble(Guajataca.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + Guajataca.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + GuajatacaLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + Guajataca.getTime());
+            }
             WriteReport.WriteLine("# La Plata");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50045000.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + LaPlata.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + LaPlataLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + LaPlata.getTime());
+            if (Convert.ToDouble(LaPlata.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + LaPlata.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + LaPlataLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + LaPlata.getTime());
+            }
             WriteReport.WriteLine("# Patillas");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50093045.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + Patillas.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + PatillasLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + Patillas.getTime());
+            if (Convert.ToDouble(Patillas.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + Patillas.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + PatillasLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + Patillas.getTime());
+            }
             WriteReport.WriteLine("# Rio Blanco");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50076800.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + RioBlanco.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + RioBlancoLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + RioBlanco.getTime());
+            if (Convert.ToDouble(RioBlanco.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + RioBlanco.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + RioBlancoLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + RioBlanco.getTime());
+            }
             WriteReport.WriteLine("# Toa Vaca");
             WriteReport.WriteLine("<center>https://waterdata.usgs.gov/nwisweb/local/state/pr/text/pics/50111210.jpg</center>");
-            WriteReport.WriteLine("Nivel: " + ToaVaca.GetCurrentLevel() + " metros");
-            WriteReport.WriteLine("Nivel de Alerta: " + ToaVacaLevel);
-            WriteReport.WriteLine("Hora de Lectura: " + ToaVaca.getTime() + Environment.NewLine);
+            if (Convert.ToDouble(ToaVaca.GetCurrentLevel()) == 0.0)
+            {
+                WriteReport.WriteLine("No se pudo obtener los datos de este embalse.");
+            }
+            else
+            {
+                WriteReport.WriteLine("Nivel: " + ToaVaca.GetCurrentLevel() + " metros");
+                WriteReport.WriteLine("Nivel de Alerta: " + ToaVacaLevel);
+                WriteReport.WriteLine("Hora de Lectura: " + ToaVaca.getTime() + Environment.NewLine);
+            }
             WriteReport.WriteLine("-------------------------------------");
-            WriteReport.WriteLine("Imágenes y datos recopilados del UGSG (United States Geological Survey) https://usgs.gov" + Environment.NewLine + Environment.NewLine);
+            WriteReport.WriteLine("Imágenes y datos recopilados del USGS (United States Geological Survey) https://usgs.gov" + Environment.NewLine + Environment.NewLine);
             WriteReport.WriteLine("-------------------------------------" + Environment.NewLine);
             WriteReport.WriteLine("¡Mantente al día de las condiciones de los embalses descargando el app \"Embalses de Puerto Rico\" disponible para Android!");
             WriteReport.WriteLine("https://play.google.com/store/apps/details?id=msc.app.embalsespuertorico" + Environment.NewLine);
             WriteReport.WriteLine("-------------------------------------");
-            WriteReport.WriteLine("Este reporte fue generado por el bot de @moisesmcardona. Si este reporte te ha parecido informativo, considera votando a @moisesmcardona como Witness. [Lee más aquí sobre mi witness y como votar.](https://steemit.com/witness/@moisesmcardona/witness-espanol)");
+            WriteReport.WriteLine("Este reporte fue generado por el programa de @moisesmcardona. Si este reporte te ha parecido informativo, considera votar a @moisesmcardona como Witness. [Lee más aquí sobre mi witness y como votar.](https://steemit.com/witness/@moisesmcardona/witness-espanol)");
             WriteReport.Close();
-            MessageBox.Show("Report has been generated");
+            try
+            {
+                System.Net.WebRequest request = System.Net.WebRequest.Create("https://api.steem.place/postToSteem/");
+                request.Method = "POST";
+                DateTime dateAndTime = DateTime.Now;
+                string MonthName = string.Empty;
+                if (dateAndTime.ToString("MM") == "01")
+                    MonthName = "enero";
+                else if (dateAndTime.ToString("MM") == "02")
+                    MonthName = "febrero";
+                else if (dateAndTime.ToString("MM") == "03")
+                    MonthName = "marzo";
+                else if (dateAndTime.ToString("MM") == "04")
+                    MonthName = "abril";
+                else if (dateAndTime.ToString("MM") == "05")
+                    MonthName = "mayo";
+                else if (dateAndTime.ToString("MM") == "06")
+                    MonthName = "junio";
+                else if (dateAndTime.ToString("MM") == "07")
+                    MonthName = "julio";
+                else if (dateAndTime.ToString("MM") == "08")
+                    MonthName = "agosto";
+                else if (dateAndTime.ToString("MM") == "09")
+                    MonthName = "septiembre";
+                else if (dateAndTime.ToString("MM") == "10")
+                    MonthName = "octubre";
+                else if (dateAndTime.ToString("MM") == "11")
+                    MonthName = "noviembre";
+                else if (dateAndTime.ToString("MM") == "12")
+                    MonthName = "diciembre";
+                StreamReader accountFile = new StreamReader("account.txt");
+                string currentline = "";
+                string Account = "";
+                string Key = "";
+                while (accountFile.EndOfStream == false)
+                {
+                    currentline = accountFile.ReadLine();
+                    if (currentline.Contains("account"))
+                    {
+                        string[] line = currentline.Split('=');
+                        Account = line[1];
+                    }
+                    else if (currentline.Contains("key"))
+                    {
+                        string[] line = currentline.Split('=');
+                        Key = line[1];
+                    }
+                }
+                dynamic postData = "title=Reporte Embalses de Puerto Rico - " + DateTime.Now.ToString("dd") + " de " + MonthName + " de " + DateTime.Now.ToString("yyyy - tt") + "&body=" + File.ReadAllText(FileName) + "&author=" + Account + "&permlink=reporte-" + DateTime.Now.ToString("MM-dd-yyyy-tt").ToLower() + "&tags=puertorico,water,spanish,stats,castellano,estadisticas,agua,embalses,reservoirs,report,reporte&pk=" + Key;
+                byte[] byteArray = Encoding.UTF8.GetBytes(postData);
+                request.ContentType = "application/x-www-form-urlencoded";
+                request.ContentLength = byteArray.Length;
+                Stream dataStream = request.GetRequestStream();
+                dataStream.Write(byteArray, 0, byteArray.Length);
+                dataStream.Close();
+                WebResponse response = request.GetResponse();
+                dataStream = response.GetResponseStream();
+                StreamReader reader = new StreamReader(dataStream);
+                string responseFromServer = reader.ReadToEnd();
+                reader.Close();
+                dataStream.Close();
+                response.Close();
+                if (silent == false)
+                    if (responseFromServer.Contains("ok"))
+                        MessageBox.Show("Report Generated");
+                    else
+                        MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
+            }
+            catch
+            {
+                MessageBox.Show("error ocurred");
+            }
+        } 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            GenerateReport();
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            string[] vars = Environment.GetCommandLineArgs();
+            if (vars.Count() > 1)
+            {
+                if(vars[1] == "-s")
+                {
+                    GenerateReport(true);
+                }
+                this.Close();
+            }
         }
     }
 }
