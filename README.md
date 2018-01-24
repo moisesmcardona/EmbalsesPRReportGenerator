@@ -14,7 +14,7 @@ account=cuenta
 key=5J123etc...
 ```
 
-Cuenta oficial donde se encuentran los reportes generados: [@embalsespr]https://steemit.com/@embalsespr  
+Cuenta oficial donde se encuentran los reportes generados: [@embalsespr](https://steemit.com/@embalsespr)
 
 Programa creado por el witness: [@moisesmcardona](https://steemit.com/@moisesmcardona)
 
