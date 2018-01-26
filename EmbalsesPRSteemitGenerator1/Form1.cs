@@ -33,32 +33,7 @@ namespace EmbalsesPRSteemitGenerator
                 JToken Item2 = Item1[Item1.Count() - 1];
                 CurrentLevel = Item2.SelectToken("value").ToString();
                 DateTime dateAndTime = DateTime.Parse(Item2.SelectToken("dateTime").ToString());
-                string MonthName = string.Empty;
-                if (dateAndTime.ToString("MM") == "01")
-                    MonthName = "enero";
-                else if (dateAndTime.ToString("MM") == "02")
-                    MonthName = "febrero";
-                else if (dateAndTime.ToString("MM") == "03")
-                    MonthName = "marzo";
-                else if (dateAndTime.ToString("MM") == "04")
-                    MonthName = "abril";
-                else if (dateAndTime.ToString("MM") == "05")
-                    MonthName = "mayo";
-                else if (dateAndTime.ToString("MM") == "06")
-                    MonthName = "junio";
-                else if (dateAndTime.ToString("MM") == "07")
-                    MonthName = "julio";
-                else if (dateAndTime.ToString("MM") == "08")
-                    MonthName = "agosto";
-                else if (dateAndTime.ToString("MM") == "09")
-                    MonthName = "septiembre";
-                else if (dateAndTime.ToString("MM") == "10")
-                    MonthName = "octubre";
-                else if (dateAndTime.ToString("MM") == "11")
-                    MonthName = "noviembre";
-                else if (dateAndTime.ToString("MM") == "12")
-                    MonthName = "diciembre";
-                string FullDate = dateAndTime.ToString("dd") + " de " + MonthName + " de " + dateAndTime.ToString("yyyy");
+                string FullDate = dateAndTime.ToString("dd") + " de " + GetMonthName(dateAndTime) + " de " + dateAndTime.ToString("yyyy");
                 string Time = dateAndTime.ToString("hh:mm tt");
                 return new ReservoirData(CurrentLevel, FullDate, Time);
             }
@@ -67,6 +42,35 @@ namespace EmbalsesPRSteemitGenerator
                 return new ReservoirData("0.0", "none", "none");
             }
            
+        }
+        private String GetMonthName(DateTime dateAndTime)
+        {
+            string MonthName = string.Empty;
+            if (dateAndTime.ToString("MM") == "01")
+                MonthName = "enero";
+            else if (dateAndTime.ToString("MM") == "02")
+                MonthName = "febrero";
+            else if (dateAndTime.ToString("MM") == "03")
+                MonthName = "marzo";
+            else if (dateAndTime.ToString("MM") == "04")
+                MonthName = "abril";
+            else if (dateAndTime.ToString("MM") == "05")
+                MonthName = "mayo";
+            else if (dateAndTime.ToString("MM") == "06")
+                MonthName = "junio";
+            else if (dateAndTime.ToString("MM") == "07")
+                MonthName = "julio";
+            else if (dateAndTime.ToString("MM") == "08")
+                MonthName = "agosto";
+            else if (dateAndTime.ToString("MM") == "09")
+                MonthName = "septiembre";
+            else if (dateAndTime.ToString("MM") == "10")
+                MonthName = "octubre";
+            else if (dateAndTime.ToString("MM") == "11")
+                MonthName = "noviembre";
+            else if (dateAndTime.ToString("MM") == "12")
+                MonthName = "diciembre";
+            return MonthName;
         }
         public class ReservoirData
         {
@@ -538,31 +542,6 @@ namespace EmbalsesPRSteemitGenerator
                 System.Net.WebRequest request = System.Net.WebRequest.Create("https://api.steem.place/postToSteem/");
                 request.Method = "POST";
                 DateTime dateAndTime = DateTime.Now;
-                string MonthName = string.Empty;
-                if (dateAndTime.ToString("MM") == "01")
-                    MonthName = "enero";
-                else if (dateAndTime.ToString("MM") == "02")
-                    MonthName = "febrero";
-                else if (dateAndTime.ToString("MM") == "03")
-                    MonthName = "marzo";
-                else if (dateAndTime.ToString("MM") == "04")
-                    MonthName = "abril";
-                else if (dateAndTime.ToString("MM") == "05")
-                    MonthName = "mayo";
-                else if (dateAndTime.ToString("MM") == "06")
-                    MonthName = "junio";
-                else if (dateAndTime.ToString("MM") == "07")
-                    MonthName = "julio";
-                else if (dateAndTime.ToString("MM") == "08")
-                    MonthName = "agosto";
-                else if (dateAndTime.ToString("MM") == "09")
-                    MonthName = "septiembre";
-                else if (dateAndTime.ToString("MM") == "10")
-                    MonthName = "octubre";
-                else if (dateAndTime.ToString("MM") == "11")
-                    MonthName = "noviembre";
-                else if (dateAndTime.ToString("MM") == "12")
-                    MonthName = "diciembre";
                 StreamReader accountFile = new StreamReader("account.txt");
                 string currentline = "";
                 string Account = "";
@@ -581,7 +560,7 @@ namespace EmbalsesPRSteemitGenerator
                         Key = line[1];
                     }
                 }
-                dynamic postData = "title=Reporte Embalses de Puerto Rico - " + DateTime.Now.ToString("dd") + " de " + MonthName + " de " + DateTime.Now.ToString("yyyy - tt") + "&body=" + File.ReadAllText(FileName) + "&author=" + Account + "&permlink=reporte-" + DateTime.Now.ToString("MM-dd-yyyy-tt").ToLower() + "&tags=puertorico,water,spanish,stats,castellano,estadisticas,agua,embalses,reservoirs,report,reporte&pk=" + Key;
+                dynamic postData = "title=Reporte Embalses de Puerto Rico - " + DateTime.Now.ToString("dd") + " de " + GetMonthName(dateAndTime) + " de " + DateTime.Now.ToString("yyyy - tt") + "&body=" + File.ReadAllText(FileName) + "&author=" + Account + "&permlink=reporte-" + DateTime.Now.ToString("MM-dd-yyyy-tt").ToLower() + "&tags=puertorico,water,spanish,stats,castellano,estadisticas,agua,embalses,reservoirs,report,reporte&pk=" + Key;
                 byte[] byteArray = Encoding.UTF8.GetBytes(postData);
                 request.ContentType = "application/x-www-form-urlencoded";
                 request.ContentLength = byteArray.Length;
