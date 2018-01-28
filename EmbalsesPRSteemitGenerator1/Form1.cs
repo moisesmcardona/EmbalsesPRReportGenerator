@@ -70,7 +70,6 @@ namespace EmbalsesPRSteemitGenerator
             {
                 return new ReservoirData("0.0", "none", "none");
             }
-
         }
 
         public class ReservoirData
@@ -423,7 +422,7 @@ namespace EmbalsesPRSteemitGenerator
             }
             return AlertLevel;
         }
-        private void PublishReport(string filename, bool silent, DateTime date)
+        private void PublishReport(string filename, bool silent, DateTime date, bool PostOnly = false)
         {
             try
             {
@@ -463,12 +462,15 @@ namespace EmbalsesPRSteemitGenerator
                 response.Close();
                 if (silent == false)
                     if (responseFromServer.Contains("ok"))
-                        MessageBox.Show("Report Generated");
+                        if (PostOnly == true)
+                            MessageBox.Show("Report Posted");
+                        else
+                            MessageBox.Show("Report Generated and Posted");
                     else
                         if (responseFromServer.Contains("bandwidth limit exceeded"))
-                            MessageBox.Show("error ocurred: Bandwidth Limit Exceeded");
-                        else
-                            MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
+                        MessageBox.Show("error ocurred: Bandwidth Limit Exceeded");
+                    else
+                        MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
             }
             catch
             {
@@ -657,7 +659,7 @@ namespace EmbalsesPRSteemitGenerator
             try
             {
                 DateTime textboxdate = DateTime.ParseExact(textBox1.Text, "yyyy-MM-dd-hh-mm-ss-tt", null);
-                PublishReport("report-" + textboxdate.ToString("yyyy-MM-dd-hh-mm-ss-tt") + ".txt", false, textboxdate);
+                PublishReport("report-" + textboxdate.ToString("yyyy-MM-dd-hh-mm-ss-tt") + ".txt", false, textboxdate, true);
             }
             catch
             {
