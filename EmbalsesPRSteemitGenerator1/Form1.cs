@@ -423,6 +423,55 @@ namespace EmbalsesPRSteemitGenerator
             }
             return AlertLevel;
         }
+        private void PublishReport(string filename, bool silent, DateTime date)
+        {
+            try
+            {
+                System.Net.WebRequest request = System.Net.WebRequest.Create("https://api.steem.place/postToSteem/");
+                request.Method = "POST";
+                StreamReader accountFile = new StreamReader("account.txt");
+                string currentline = "";
+                string Account = "";
+                string Key = "";
+                while (accountFile.EndOfStream == false)
+                {
+                    currentline = accountFile.ReadLine();
+                    if (currentline.Contains("account"))
+                    {
+                        string[] line = currentline.Split('=');
+                        Account = line[1];
+                    }
+                    else if (currentline.Contains("key"))
+                    {
+                        string[] line = currentline.Split('=');
+                        Key = line[1];
+                    }
+                }
+                dynamic postData = "title=Reporte Embalses de Puerto Rico - " + date.ToString("dd") + " de " + GetMonthName(date) + " de " + date.ToString("yyyy - tt") + "&body=" + File.ReadAllText(filename) + "&author=" + Account + "&permlink=reporte-" + date.ToString("MM-dd-yyyy-tt").ToLower() + "&tags=puertorico,water,spanish,stats,castellano,estadisticas,agua,embalses,reservoirs,report,reporte&pk=" + Key;
+                byte[] byteArray = Encoding.UTF8.GetBytes(postData);
+                request.ContentType = "application/x-www-form-urlencoded";
+                request.ContentLength = byteArray.Length;
+                Stream dataStream = request.GetRequestStream();
+                dataStream.Write(byteArray, 0, byteArray.Length);
+                dataStream.Close();
+                WebResponse response = request.GetResponse();
+                dataStream = response.GetResponseStream();
+                StreamReader reader = new StreamReader(dataStream);
+                string responseFromServer = reader.ReadToEnd();
+                reader.Close();
+                dataStream.Close();
+                response.Close();
+                if (silent == false)
+                    if (responseFromServer.Contains("ok"))
+                        MessageBox.Show("Report Generated");
+                    else
+                        MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
+            }
+            catch
+            {
+                MessageBox.Show("error ocurred");
+            }
+        }
         private void GenerateReport(bool silent = false)
         {
             ReservoirData Caonillas = GetReservoirLevel("50026140", 1);
@@ -581,53 +630,7 @@ namespace EmbalsesPRSteemitGenerator
             WriteReport.WriteLine("-------------------------------------");
             WriteReport.WriteLine("Este reporte fue generado por el programa de @moisesmcardona. Si este reporte te ha parecido informativo, considera votar a @moisesmcardona como Witness. [Lee más aquí sobre mi witness y como votar.](https://steemit.com/witness/@moisesmcardona/witness-espanol)");
             WriteReport.Close();
-            try
-            {
-                System.Net.WebRequest request = System.Net.WebRequest.Create("https://api.steem.place/postToSteem/");
-                request.Method = "POST";
-                DateTime dateAndTime = DateTime.Now;
-                StreamReader accountFile = new StreamReader("account.txt");
-                string currentline = "";
-                string Account = "";
-                string Key = "";
-                while (accountFile.EndOfStream == false)
-                {
-                    currentline = accountFile.ReadLine();
-                    if (currentline.Contains("account"))
-                    {
-                        string[] line = currentline.Split('=');
-                        Account = line[1];
-                    }
-                    else if (currentline.Contains("key"))
-                    {
-                        string[] line = currentline.Split('=');
-                        Key = line[1];
-                    }
-                }
-                dynamic postData = "title=Reporte Embalses de Puerto Rico - " + DateTime.Now.ToString("dd") + " de " + GetMonthName(dateAndTime) + " de " + DateTime.Now.ToString("yyyy - tt") + "&body=" + File.ReadAllText(FileName) + "&author=" + Account + "&permlink=reporte-" + DateTime.Now.ToString("MM-dd-yyyy-tt").ToLower() + "&tags=puertorico,water,spanish,stats,castellano,estadisticas,agua,embalses,reservoirs,report,reporte&pk=" + Key;
-                byte[] byteArray = Encoding.UTF8.GetBytes(postData);
-                request.ContentType = "application/x-www-form-urlencoded";
-                request.ContentLength = byteArray.Length;
-                Stream dataStream = request.GetRequestStream();
-                dataStream.Write(byteArray, 0, byteArray.Length);
-                dataStream.Close();
-                WebResponse response = request.GetResponse();
-                dataStream = response.GetResponseStream();
-                StreamReader reader = new StreamReader(dataStream);
-                string responseFromServer = reader.ReadToEnd();
-                reader.Close();
-                dataStream.Close();
-                response.Close();
-                if (silent == false)
-                    if (responseFromServer.Contains("ok"))
-                        MessageBox.Show("Report Generated");
-                    else
-                        MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
-            }
-            catch
-            {
-                MessageBox.Show("error ocurred");
-            }
+            PublishReport(FileName, silent, DateTime.Now);
         } 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -643,6 +646,19 @@ namespace EmbalsesPRSteemitGenerator
                     GenerateReport(true);
                 }
                 this.Close();
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DateTime textboxdate = DateTime.ParseExact(textBox1.Text, "yyyy-MM-dd-hh-mm-ss-tt", null);
+                PublishReport("report-" + textboxdate.ToString("yyyy-MM-dd-hh-mm-ss-tt") + ".txt", false, textboxdate);
+            }
+            catch
+            {
+                MessageBox.Show("Date may be incorrect");
             }
         }
     }
