@@ -468,9 +468,9 @@ namespace EmbalsesPRSteemitGenerator
                             MessageBox.Show("Report Generated and Posted");
                     else
                         if (responseFromServer.Contains("bandwidth limit exceeded"))
-                        MessageBox.Show("error ocurred: Bandwidth Limit Exceeded");
-                    else
-                        MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
+                           MessageBox.Show("error ocurred: Bandwidth Limit Exceeded");
+                        else
+                            MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
             }
             catch
             {
