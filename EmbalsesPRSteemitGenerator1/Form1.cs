@@ -70,9 +70,9 @@ namespace EmbalsesPRSteemitGenerator
             {
                 return new ReservoirData("0.0", "none", "none");
             }
-           
+
         }
-       
+
         public class ReservoirData
         {
             private string CurrentLevel = string.Empty;
@@ -465,7 +465,10 @@ namespace EmbalsesPRSteemitGenerator
                     if (responseFromServer.Contains("ok"))
                         MessageBox.Show("Report Generated");
                     else
-                        MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
+                        if (responseFromServer.Contains("bandwidth limit exceeded"))
+                            MessageBox.Show("error ocurred: Bandwidth Limit Exceeded");
+                        else
+                            MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
             }
             catch
             {
@@ -631,7 +634,7 @@ namespace EmbalsesPRSteemitGenerator
             WriteReport.WriteLine("Este reporte fue generado por el programa de @moisesmcardona. Si este reporte te ha parecido informativo, considera votar a @moisesmcardona como Witness. [Lee más aquí sobre mi witness y como votar.](https://steemit.com/witness/@moisesmcardona/witness-espanol)");
             WriteReport.Close();
             PublishReport(FileName, silent, DateTime.Now);
-        } 
+        }
         private void button1_Click(object sender, EventArgs e)
         {
             GenerateReport();
@@ -641,7 +644,7 @@ namespace EmbalsesPRSteemitGenerator
             string[] vars = Environment.GetCommandLineArgs();
             if (vars.Count() > 1)
             {
-                if(vars[1] == "-s")
+                if (vars[1] == "-s")
                 {
                     GenerateReport(true);
                 }
