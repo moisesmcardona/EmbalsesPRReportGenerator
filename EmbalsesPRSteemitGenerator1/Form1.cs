@@ -422,12 +422,43 @@ namespace EmbalsesPRSteemitGenerator
             }
             return AlertLevel;
         }
+
+        private void PostToFacebook(DateTime date)
+        {
+            string PostMessage = string.Empty;
+            if (date.ToString("tt") == "AM")
+            {
+                PostMessage = "Reporte para la mañana de hoy: ";
+            }
+            else
+            {
+                PostMessage = "Reporte para la noche de hoy: ";
+            }
+            try
+            {
+                HttpWebRequest request = WebRequest.Create("https://graph.facebook.com/172345859774139/feed?message=" + PostMessage + "&link=steemit.com/tag/@embalsespr/reporte-" + date.ToString("MM-dd-yyy-tt").ToLower()) as HttpWebRequest;
+                request.Method = "POST";
+                request.UserAgent = @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36";
+                request.Headers["Authorization"] = "Bearer " + File.ReadAllText("fb_token.txt");
+                request.ContentType = "application/x-www-form-urlencoded";
+                Stream dataStream = request.GetRequestStream();
+                WebResponse response = request.GetResponse();
+                dataStream = response.GetResponseStream();
+                StreamReader reader = new StreamReader(dataStream);
+                string responseFromServer = reader.ReadToEnd();
+                reader.Close();
+                dataStream.Close();
+                response.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
         private void PublishReport(string filename, bool silent, DateTime date, bool PostOnly = false)
         {
             try
             {
-                System.Net.WebRequest request = System.Net.WebRequest.Create("https://api.steem.place/postToSteem/");
-                request.Method = "POST";
                 StreamReader accountFile = new StreamReader("account.txt");
                 string currentline = "";
                 string Account = "";
@@ -446,6 +477,8 @@ namespace EmbalsesPRSteemitGenerator
                         Key = line[1];
                     }
                 }
+                System.Net.WebRequest request = System.Net.WebRequest.Create("https://api.steem.place/postToSteem/");
+                request.Method = "POST";
                 dynamic postData = "title=Reporte Embalses de Puerto Rico - " + date.ToString("dd") + " de " + GetMonthName(date) + " de " + date.ToString("yyyy - tt") + "&body=" + File.ReadAllText(filename) + "&author=" + Account + "&permlink=reporte-" + date.ToString("MM-dd-yyyy-tt").ToLower() + "&tags=puertorico,water,spanish,stats,castellano,estadisticas,agua,embalses,reservoirs,report,reporte&pk=" + Key;
                 byte[] byteArray = Encoding.UTF8.GetBytes(postData);
                 request.ContentType = "application/x-www-form-urlencoded";
@@ -460,6 +493,8 @@ namespace EmbalsesPRSteemitGenerator
                 reader.Close();
                 dataStream.Close();
                 response.Close();
+                // post to Facebook
+                PostToFacebook(date);
                 if (silent == false)
                     if (responseFromServer.Contains("ok"))
                         if (PostOnly == true)
@@ -468,9 +503,9 @@ namespace EmbalsesPRSteemitGenerator
                             MessageBox.Show("Report Generated and Posted");
                     else
                         if (responseFromServer.Contains("bandwidth limit exceeded"))
-                           MessageBox.Show("error ocurred: Bandwidth Limit Exceeded");
-                        else
-                            MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
+                        MessageBox.Show("error ocurred: Bandwidth Limit Exceeded");
+                    else
+                        MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
             }
             catch
             {
