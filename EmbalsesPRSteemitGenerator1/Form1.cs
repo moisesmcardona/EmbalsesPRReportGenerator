@@ -507,9 +507,9 @@ namespace EmbalsesPRSteemitGenerator
                         else
                             MessageBox.Show("error ocurred: " + Environment.NewLine + responseFromServer);
             }
-            catch
+            catch (Exception ex)
             {
-                MessageBox.Show("error ocurred");
+                MessageBox.Show("error ocurred: " + ex.ToString());
             }
         }
         private void GenerateReport(bool silent = false)
